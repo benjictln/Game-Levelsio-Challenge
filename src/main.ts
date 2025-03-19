@@ -59,7 +59,10 @@ function createChunk(chunkX: number, chunkZ: number): THREE.Group {
 function createTree(x: number, z: number) {
     const tree = new THREE.Group();
     
-    // Randomize tree height and thickness
+    // Randomly select tree type
+    const treeType = Math.random();
+    
+    // Common trunk properties
     const height = 2 + Math.random() * 1.5; // Height between 2 and 3.5
     const trunkRadius = 0.15 + Math.random() * 0.1; // Radius between 0.15 and 0.25
     
@@ -80,45 +83,111 @@ function createTree(x: number, z: number) {
     trunk.receiveShadow = true;
     tree.add(trunk);
 
-    // Create multiple layers of leaves for more realistic look
-    const leafLayers = 3;
-    const leafColors = [0x2d5a27, 0x3a7e3a, 0x4a8f4a]; // Different shades of green
-    
-    for (let i = 0; i < leafLayers; i++) {
-        const layerScale = 1 - (i * 0.2); // Each layer is slightly smaller
-        const layerHeight = height * (0.6 + i * 0.2); // Stagger the heights
+    if (treeType < 0.4) { // Pine tree (40% chance)
+        // Create multiple layers of pine needles
+        const pineLayers = 4;
+        const pineColors = [0x1a4a1a, 0x2d5a27, 0x3a7e3a, 0x4a8f4a];
         
-        // Main leaf cluster
-        const leavesGeometry = new THREE.ConeGeometry(
-            1.5 * layerScale,
-            3 * layerScale,
-            12
-        );
-        const leavesMaterial = new THREE.MeshStandardMaterial({ 
-            color: leafColors[i],
-            roughness: 0.7,
-            metalness: 0.1
-        });
-        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
-        leaves.position.y = layerHeight;
-        leaves.castShadow = true;
-        leaves.receiveShadow = true;
-        tree.add(leaves);
-
-        // Add smaller side clusters
-        const sideClusters = 3;
-        for (let j = 0; j < sideClusters; j++) {
-            const angle = (j / sideClusters) * Math.PI * 2;
-            const sideLeaves = new THREE.Mesh(
-                new THREE.ConeGeometry(0.8 * layerScale, 1.5 * layerScale, 8),
-                leavesMaterial
+        for (let i = 0; i < pineLayers; i++) {
+            const layerScale = 1 - (i * 0.15); // Each layer is slightly smaller
+            const layerHeight = height * (0.5 + i * 0.15); // Stagger the heights
+            
+            // Main pine cluster
+            const pineGeometry = new THREE.ConeGeometry(
+                1.2 * layerScale,
+                2.5 * layerScale,
+                8
             );
-            sideLeaves.position.y = layerHeight * 0.8;
-            sideLeaves.position.x = Math.cos(angle) * 0.8;
-            sideLeaves.position.z = Math.sin(angle) * 0.8;
-            sideLeaves.castShadow = true;
-            sideLeaves.receiveShadow = true;
-            tree.add(sideLeaves);
+            const pineMaterial = new THREE.MeshStandardMaterial({ 
+                color: pineColors[i],
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            const pine = new THREE.Mesh(pineGeometry, pineMaterial);
+            pine.position.y = layerHeight;
+            pine.castShadow = true;
+            pine.receiveShadow = true;
+            tree.add(pine);
+        }
+    } else if (treeType < 0.7) { // Round tree (30% chance)
+        // Create a round, bushy tree
+        const roundLayers = 3;
+        const roundColors = [0x2d5a27, 0x3a7e3a, 0x4a8f4a];
+        
+        for (let i = 0; i < roundLayers; i++) {
+            const layerScale = 1 - (i * 0.2);
+            const layerHeight = height * (0.6 + i * 0.2);
+            
+            // Main round cluster
+            const roundGeometry = new THREE.SphereGeometry(1.2 * layerScale, 12, 12);
+            const roundMaterial = new THREE.MeshStandardMaterial({ 
+                color: roundColors[i],
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            const round = new THREE.Mesh(roundGeometry, roundMaterial);
+            round.position.y = layerHeight;
+            round.castShadow = true;
+            round.receiveShadow = true;
+            tree.add(round);
+            
+            // Add side clusters
+            const sideClusters = 4;
+            for (let j = 0; j < sideClusters; j++) {
+                const angle = (j / sideClusters) * Math.PI * 2;
+                const sideRound = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.6 * layerScale, 8, 8),
+                    roundMaterial
+                );
+                sideRound.position.y = layerHeight * 0.8;
+                sideRound.position.x = Math.cos(angle) * 0.8;
+                sideRound.position.z = Math.sin(angle) * 0.8;
+                sideRound.castShadow = true;
+                sideRound.receiveShadow = true;
+                tree.add(sideRound);
+            }
+        }
+    } else { // Tall tree (30% chance)
+        // Create a tall, slender tree with sparse foliage
+        const tallLayers = 2;
+        const tallColors = [0x2d5a27, 0x3a7e3a];
+        
+        for (let i = 0; i < tallLayers; i++) {
+            const layerScale = 1 - (i * 0.3);
+            const layerHeight = height * (0.7 + i * 0.3);
+            
+            // Main tall cluster
+            const tallGeometry = new THREE.ConeGeometry(
+                0.8 * layerScale,
+                2 * layerScale,
+                10
+            );
+            const tallMaterial = new THREE.MeshStandardMaterial({ 
+                color: tallColors[i],
+                roughness: 0.7,
+                metalness: 0.1
+            });
+            const tall = new THREE.Mesh(tallGeometry, tallMaterial);
+            tall.position.y = layerHeight;
+            tall.castShadow = true;
+            tall.receiveShadow = true;
+            tree.add(tall);
+            
+            // Add sparse side clusters
+            const sideClusters = 2;
+            for (let j = 0; j < sideClusters; j++) {
+                const angle = (j / sideClusters) * Math.PI * 2;
+                const sideTall = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.4 * layerScale, 1 * layerScale, 6),
+                    tallMaterial
+                );
+                sideTall.position.y = layerHeight * 0.8;
+                sideTall.position.x = Math.cos(angle) * 0.6;
+                sideTall.position.z = Math.sin(angle) * 0.6;
+                sideTall.castShadow = true;
+                sideTall.receiveShadow = true;
+                tree.add(sideTall);
+            }
         }
     }
 
