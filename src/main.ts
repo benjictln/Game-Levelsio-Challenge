@@ -189,9 +189,20 @@ const cameraLerpFactor = 0.1; // Smoothing factor for camera movement
 const moveSpeed = 0.1;
 const keys: { [key: string]: boolean } = {};
 
+// Jump variables
+let isJumping = false;
+let verticalVelocity = 0;
+const gravity = 0.015;
+const jumpForce = 0.3;
+const groundLevel = 0;
+
 // Keyboard event listeners
 window.addEventListener('keydown', (event) => {
     keys[event.key] = true;
+    if (event.key === ' ' && !isJumping) {
+        isJumping = true;
+        verticalVelocity = jumpForce;
+    }
 });
 
 window.addEventListener('keyup', (event) => {
@@ -237,6 +248,19 @@ const animate = (): void => {
         rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
         leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
         rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+    }
+
+    // Handle jumping
+    if (isJumping) {
+        character.position.y += verticalVelocity;
+        verticalVelocity -= gravity;
+
+        // Check if landed
+        if (character.position.y <= groundLevel) {
+            character.position.y = groundLevel;
+            isJumping = false;
+            verticalVelocity = 0;
+        }
     }
 
     // Reset animations when not moving
