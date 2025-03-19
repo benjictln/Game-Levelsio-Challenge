@@ -59,23 +59,71 @@ function createChunk(chunkX: number, chunkZ: number): THREE.Group {
 function createTree(x: number, z: number) {
     const tree = new THREE.Group();
     
-    // Tree trunk
-    const trunkGeometry = new THREE.CylinderGeometry(0.2, 0.4, 2, 8);
-    const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x4a2f10 });
+    // Randomize tree height and thickness
+    const height = 2 + Math.random() * 1.5; // Height between 2 and 3.5
+    const trunkRadius = 0.15 + Math.random() * 0.1; // Radius between 0.15 and 0.25
+    
+    // Tree trunk with varying thickness
+    const trunkGeometry = new THREE.CylinderGeometry(
+        trunkRadius * 0.8, // Top radius
+        trunkRadius * 1.2, // Bottom radius
+        height, // Height
+        12 // Segments
+    );
+    const trunkMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x4a2f10,
+        roughness: 0.8,
+        metalness: 0.2
+    });
     const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
     trunk.castShadow = true;
     trunk.receiveShadow = true;
     tree.add(trunk);
 
-    // Tree top (leaves)
-    const leavesGeometry = new THREE.ConeGeometry(1.5, 3, 8);
-    const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x2d5a27 });
-    const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
-    leaves.position.y = 1.5;
-    leaves.castShadow = true;
-    leaves.receiveShadow = true;
-    tree.add(leaves);
+    // Create multiple layers of leaves for more realistic look
+    const leafLayers = 3;
+    const leafColors = [0x2d5a27, 0x3a7e3a, 0x4a8f4a]; // Different shades of green
+    
+    for (let i = 0; i < leafLayers; i++) {
+        const layerScale = 1 - (i * 0.2); // Each layer is slightly smaller
+        const layerHeight = height * (0.6 + i * 0.2); // Stagger the heights
+        
+        // Main leaf cluster
+        const leavesGeometry = new THREE.ConeGeometry(
+            1.5 * layerScale,
+            3 * layerScale,
+            12
+        );
+        const leavesMaterial = new THREE.MeshStandardMaterial({ 
+            color: leafColors[i],
+            roughness: 0.7,
+            metalness: 0.1
+        });
+        const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+        leaves.position.y = layerHeight;
+        leaves.castShadow = true;
+        leaves.receiveShadow = true;
+        tree.add(leaves);
 
+        // Add smaller side clusters
+        const sideClusters = 3;
+        for (let j = 0; j < sideClusters; j++) {
+            const angle = (j / sideClusters) * Math.PI * 2;
+            const sideLeaves = new THREE.Mesh(
+                new THREE.ConeGeometry(0.8 * layerScale, 1.5 * layerScale, 8),
+                leavesMaterial
+            );
+            sideLeaves.position.y = layerHeight * 0.8;
+            sideLeaves.position.x = Math.cos(angle) * 0.8;
+            sideLeaves.position.z = Math.sin(angle) * 0.8;
+            sideLeaves.castShadow = true;
+            sideLeaves.receiveShadow = true;
+            tree.add(sideLeaves);
+        }
+    }
+
+    // Add some random rotation to make trees look more natural
+    tree.rotation.y = Math.random() * Math.PI;
     tree.position.set(x, 0, z);
     return tree;
 }
