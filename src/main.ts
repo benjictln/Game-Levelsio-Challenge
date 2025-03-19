@@ -132,9 +132,9 @@ directionalLight.shadow.mapSize.width = 1024;
 directionalLight.shadow.mapSize.height = 1024;
 scene.add(directionalLight);
 
-// Camera Position
-camera.position.set(0, 5, 10);
-camera.lookAt(0, 0, 0);
+// Camera settings
+const cameraOffset = new THREE.Vector3(0, 5, 10);
+const cameraLerpFactor = 0.1; // Smoothing factor for camera movement
 
 // Movement variables
 const moveSpeed = 0.1;
@@ -194,6 +194,19 @@ const animate = (): void => {
         leftArm.rotation.z = Math.PI / 4;
         rightArm.rotation.z = -Math.PI / 4;
     }
+
+    // Update camera position to follow character
+    const targetCameraPosition = new THREE.Vector3(
+        character.position.x + cameraOffset.x,
+        character.position.y + cameraOffset.y,
+        character.position.z + cameraOffset.z
+    );
+
+    // Smoothly move camera to target position
+    camera.position.lerp(targetCameraPosition, cameraLerpFactor);
+
+    // Make camera look at character
+    camera.lookAt(character.position);
 
     renderer.render(scene, camera);
 };
