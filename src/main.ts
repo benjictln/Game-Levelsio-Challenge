@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { AudioManager } from "./audio";
+import { ForeignCreature } from "./foreign_creature";
 
 // Setup Scene
 const scene: THREE.Scene = new THREE.Scene();
@@ -461,111 +462,167 @@ window.addEventListener('keyup', (event) => {
 // Initial chunk generation
 updateChunks(0, 0);
 
-// Animation Loop
+// Game state
+let isGameOver = false;
+
+// Create initial foreign creatures
+const foreignCreatures: ForeignCreature[] = [];
+const numCreatures = 5;
+
+// Spawn creatures at random positions
+for (let i = 0; i < numCreatures; i++) {
+    const x = (Math.random() - 0.5) * 50;
+    const z = (Math.random() - 0.5) * 50;
+    const creature = new ForeignCreature(x, z);
+    scene.add(creature.getMesh());
+    foreignCreatures.push(creature);
+}
+
+// Game Over UI
+const gameOverPanel = document.createElement('div');
+gameOverPanel.style.position = 'fixed';
+gameOverPanel.style.top = '50%';
+gameOverPanel.style.left = '50%';
+gameOverPanel.style.transform = 'translate(-50%, -50%)';
+gameOverPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+gameOverPanel.style.padding = '30px';
+gameOverPanel.style.borderRadius = '15px';
+gameOverPanel.style.color = 'white';
+gameOverPanel.style.fontFamily = 'Arial, sans-serif';
+gameOverPanel.style.fontSize = '24px';
+gameOverPanel.style.textAlign = 'center';
+gameOverPanel.style.display = 'none';
+gameOverPanel.style.zIndex = '1000';
+gameOverPanel.innerHTML = `
+    <h2 style="margin: 0 0 20px 0;">Game Over!</h2>
+    <p style="margin: 0;">You were caught by a foreign creature!</p>
+    <button style="margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer;">Restart Game</button>
+`;
+document.body.appendChild(gameOverPanel);
+
+// Add click handler for restart button
+gameOverPanel.querySelector('button')?.addEventListener('click', () => {
+    location.reload();
+});
+
+// Update animation loop
 const animate = (): void => {
     requestAnimationFrame(animate);
 
-    // Handle movement
-    if (keys['ArrowLeft']) {
-        character.position.x -= moveSpeed;
-        // Add walking animation
-        leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
-        rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
-        leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
-        rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
-        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
-        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
-        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
-        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
-    }
-    if (keys['ArrowRight']) {
-        character.position.x += moveSpeed;
-        // Add walking animation
-        leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
-        rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
-        leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
-        rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
-        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
-        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
-        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
-        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
-    }
-    if (keys['ArrowUp']) {
-        character.position.z -= moveSpeed;
-        // Add walking animation
-        leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
-        rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
-        leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
-        rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
-        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
-        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
-        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
-        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
-    }
-    if (keys['ArrowDown']) {
-        character.position.z += moveSpeed;
-        // Add walking animation
-        leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
-        rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
-        leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
-        rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
-        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
-        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
-        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
-        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
-    }
+    if (!isGameOver) {
+        // Handle movement
+        if (keys['ArrowLeft']) {
+            character.position.x -= moveSpeed;
+            // Add walking animation
+            leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
+            rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
+            leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
+            rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+            leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+            rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+            leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+            rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
+        }
+        if (keys['ArrowRight']) {
+            character.position.x += moveSpeed;
+            // Add walking animation
+            leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
+            rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
+            leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
+            rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+            leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+            rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+            leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+            rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
+        }
+        if (keys['ArrowUp']) {
+            character.position.z -= moveSpeed;
+            // Add walking animation
+            leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
+            rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
+            leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
+            rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+            leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+            rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+            leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+            rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
+        }
+        if (keys['ArrowDown']) {
+            character.position.z += moveSpeed;
+            // Add walking animation
+            leftLeg.rotation.x = Math.sin(Date.now() * 0.01) * 0.5;
+            rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
+            leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
+            rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+            leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+            rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+            leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+            rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
+        }
 
-    // Handle jumping
-    if (isJumping) {
-        character.position.y += verticalVelocity;
-        verticalVelocity -= gravity;
+        // Handle jumping
+        if (isJumping) {
+            character.position.y += verticalVelocity;
+            verticalVelocity -= gravity;
 
-        // Add jumping animation
-        leftLeg.rotation.x = -0.3;
-        rightLeg.rotation.x = -0.3;
-        leftArm.rotation.z = Math.PI / 4 - 0.3;
-        rightArm.rotation.z = -Math.PI / 4 + 0.3;
+            // Add jumping animation
+            leftLeg.rotation.x = -0.3;
+            rightLeg.rotation.x = -0.3;
+            leftArm.rotation.z = Math.PI / 4 - 0.3;
+            rightArm.rotation.z = -Math.PI / 4 + 0.3;
 
-        // Check if landed
-        if (character.position.y <= groundLevel) {
-            character.position.y = groundLevel;
-            isJumping = false;
-            verticalVelocity = 0;
-            // Reset to default pose
+            // Check if landed
+            if (character.position.y <= groundLevel) {
+                character.position.y = groundLevel;
+                isJumping = false;
+                verticalVelocity = 0;
+                // Reset to default pose
+                leftLeg.rotation.x = 0;
+                rightLeg.rotation.x = 0;
+                leftArm.rotation.z = Math.PI / 4;
+                rightArm.rotation.z = -Math.PI / 4;
+            }
+        }
+
+        // Reset animations when not moving
+        if (!keys['ArrowLeft'] && !keys['ArrowRight'] && !keys['ArrowUp'] && !keys['ArrowDown'] && !isJumping) {
             leftLeg.rotation.x = 0;
             rightLeg.rotation.x = 0;
             leftArm.rotation.z = Math.PI / 4;
             rightArm.rotation.z = -Math.PI / 4;
+            leftHand.rotation.z = 0;
+            rightHand.rotation.z = 0;
+            leftFoot.rotation.x = 0;
+            rightFoot.rotation.x = 0;
         }
+
+        // Update chunks based on character position
+        updateChunks(character.position.x, character.position.z);
+
+        // Update camera position to follow character
+        const targetCameraPosition = new THREE.Vector3(
+            character.position.x + cameraOffset.x,
+            character.position.y + cameraOffset.y,
+            character.position.z + cameraOffset.z
+        );
+
+        // Smoothly move camera to target position
+        camera.position.lerp(targetCameraPosition, cameraLerpFactor);
+
+        // Make camera look at character
+        camera.lookAt(character.position);
+
+        // Update foreign creatures
+        foreignCreatures.forEach(creature => {
+            creature.update(character.position);
+            
+            // Check for collision
+            if (creature.checkCollision(character.position)) {
+                isGameOver = true;
+                gameOverPanel.style.display = 'block';
+            }
+        });
     }
-
-    // Reset animations when not moving
-    if (!keys['ArrowLeft'] && !keys['ArrowRight'] && !keys['ArrowUp'] && !keys['ArrowDown'] && !isJumping) {
-        leftLeg.rotation.x = 0;
-        rightLeg.rotation.x = 0;
-        leftArm.rotation.z = Math.PI / 4;
-        rightArm.rotation.z = -Math.PI / 4;
-        leftHand.rotation.z = 0;
-        rightHand.rotation.z = 0;
-        leftFoot.rotation.x = 0;
-        rightFoot.rotation.x = 0;
-    }
-
-    // Update chunks based on character position
-    updateChunks(character.position.x, character.position.z);
-
-    // Update camera position to follow character
-    const targetCameraPosition = new THREE.Vector3(
-        character.position.x + cameraOffset.x,
-        character.position.y + cameraOffset.y,
-        character.position.z + cameraOffset.z
-    );
-
-    // Smoothly move camera to target position
-    camera.position.lerp(targetCameraPosition, cameraLerpFactor);
-
-    // Make camera look at character
-    camera.lookAt(character.position);
 
     renderer.render(scene, camera);
 };
