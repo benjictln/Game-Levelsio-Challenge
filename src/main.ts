@@ -1,8 +1,27 @@
 import * as THREE from "three";
+import { AudioManager } from "./audio";
 
 // Setup Scene
 const scene: THREE.Scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB); // Sky blue background
+
+// Initialize Audio Manager
+const audioManager = new AudioManager();
+
+// Add click listener to start music
+document.addEventListener('click', () => {
+    audioManager.playBackgroundMusic(
+        'background_music.mp3',
+        0.3 // Volume at 30%
+    );
+}, { once: true });
+
+// Add mute toggle with 'M' key
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'm') {
+        audioManager.toggleMute();
+    }
+});
 
 const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
     75, 
@@ -235,44 +254,119 @@ function updateChunks(characterX: number, characterZ: number) {
 // Create Character
 const character = new THREE.Group();
 
-// Body
-const bodyGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.8, 8);
-const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+// Body - slightly rounder and shorter
+const bodyGeometry = new THREE.CylinderGeometry(0.25, 0.25, 0.6, 12);
+const bodyMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00,
+    roughness: 0.5,
+    metalness: 0.1
+});
 const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-body.position.y = 0.4;
+body.position.y = 0.3;
 body.castShadow = true;
 body.receiveShadow = true;
 character.add(body);
 
-// Head
-const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
-const headMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+// Head - larger and rounder
+const headGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+const headMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00,
+    roughness: 0.5,
+    metalness: 0.1
+});
 const head = new THREE.Mesh(headGeometry, headMaterial);
-head.position.y = 1.2;
+head.position.y = 0.9;
 head.castShadow = true;
 head.receiveShadow = true;
 character.add(head);
 
-// Arms
-const armGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
-const armMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+// Eyes
+const eyeGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+leftEye.position.set(-0.12, 0.95, 0.25);
+leftEye.castShadow = true;
+leftEye.receiveShadow = true;
+character.add(leftEye);
+
+const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+rightEye.position.set(0.12, 0.95, 0.25);
+rightEye.castShadow = true;
+rightEye.receiveShadow = true;
+character.add(rightEye);
+
+// Pupils
+const pupilGeometry = new THREE.SphereGeometry(0.04, 8, 8);
+const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+leftPupil.position.set(-0.12, 0.95, 0.28);
+leftPupil.castShadow = true;
+leftPupil.receiveShadow = true;
+character.add(leftPupil);
+
+const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+rightPupil.position.set(0.12, 0.95, 0.28);
+rightPupil.castShadow = true;
+rightPupil.receiveShadow = true;
+character.add(rightPupil);
+
+// Smile
+const smileGeometry = new THREE.TorusGeometry(0.1, 0.02, 8, 16, Math.PI);
+const smileMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+smile.position.set(0, 0.85, 0.25);
+smile.rotation.x = Math.PI;
+smile.castShadow = true;
+smile.receiveShadow = true;
+character.add(smile);
+
+// Arms - shorter and rounder
+const armGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 8);
+const armMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00,
+    roughness: 0.5,
+    metalness: 0.1
+});
 const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-leftArm.position.set(-0.3, 0.8, 0);
+leftArm.position.set(-0.35, 0.6, 0);
 leftArm.rotation.z = Math.PI / 4;
 leftArm.castShadow = true;
 leftArm.receiveShadow = true;
 character.add(leftArm);
 
 const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-rightArm.position.set(0.3, 0.8, 0);
+rightArm.position.set(0.35, 0.6, 0);
 rightArm.rotation.z = -Math.PI / 4;
 rightArm.castShadow = true;
 rightArm.receiveShadow = true;
 character.add(rightArm);
 
-// Legs
-const legGeometry = new THREE.CylinderGeometry(0.1, 0.1, 0.4, 8);
-const legMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+// Hands
+const handGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+const handMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00,
+    roughness: 0.5,
+    metalness: 0.1
+});
+const leftHand = new THREE.Mesh(handGeometry, handMaterial);
+leftHand.position.set(-0.5, 0.6, 0);
+leftHand.castShadow = true;
+leftHand.receiveShadow = true;
+character.add(leftHand);
+
+const rightHand = new THREE.Mesh(handGeometry, handMaterial);
+rightHand.position.set(0.5, 0.6, 0);
+rightHand.castShadow = true;
+rightHand.receiveShadow = true;
+character.add(rightHand);
+
+// Legs - shorter and rounder
+const legGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.3, 8);
+const legMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00,
+    roughness: 0.5,
+    metalness: 0.1
+});
 const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
 leftLeg.position.set(-0.15, 0, 0);
 leftLeg.castShadow = true;
@@ -284,6 +378,25 @@ rightLeg.position.set(0.15, 0, 0);
 rightLeg.castShadow = true;
 rightLeg.receiveShadow = true;
 character.add(rightLeg);
+
+// Feet
+const footGeometry = new THREE.BoxGeometry(0.15, 0.05, 0.2);
+const footMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0x00ff00,
+    roughness: 0.5,
+    metalness: 0.1
+});
+const leftFoot = new THREE.Mesh(footGeometry, footMaterial);
+leftFoot.position.set(-0.15, -0.15, 0);
+leftFoot.castShadow = true;
+leftFoot.receiveShadow = true;
+character.add(leftFoot);
+
+const rightFoot = new THREE.Mesh(footGeometry, footMaterial);
+rightFoot.position.set(0.15, -0.15, 0);
+rightFoot.castShadow = true;
+rightFoot.receiveShadow = true;
+character.add(rightFoot);
 
 scene.add(character);
 
@@ -341,6 +454,10 @@ const animate = (): void => {
         rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
         leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
         rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
     }
     if (keys['ArrowRight']) {
         character.position.x += moveSpeed;
@@ -349,6 +466,10 @@ const animate = (): void => {
         rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
         leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
         rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
     }
     if (keys['ArrowUp']) {
         character.position.z -= moveSpeed;
@@ -357,6 +478,10 @@ const animate = (): void => {
         rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
         leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
         rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
     }
     if (keys['ArrowDown']) {
         character.position.z += moveSpeed;
@@ -365,6 +490,10 @@ const animate = (): void => {
         rightLeg.rotation.x = -Math.sin(Date.now() * 0.01) * 0.5;
         leftArm.rotation.z = Math.PI / 4 + Math.sin(Date.now() * 0.01) * 0.2;
         rightArm.rotation.z = -Math.PI / 4 - Math.sin(Date.now() * 0.01) * 0.2;
+        leftHand.rotation.z = Math.sin(Date.now() * 0.01) * 0.3;
+        rightHand.rotation.z = -Math.sin(Date.now() * 0.01) * 0.3;
+        leftFoot.rotation.x = Math.sin(Date.now() * 0.01) * 0.3;
+        rightFoot.rotation.x = -Math.sin(Date.now() * 0.01) * 0.3;
     }
 
     // Handle jumping
@@ -372,20 +501,35 @@ const animate = (): void => {
         character.position.y += verticalVelocity;
         verticalVelocity -= gravity;
 
+        // Add jumping animation
+        leftLeg.rotation.x = -0.3;
+        rightLeg.rotation.x = -0.3;
+        leftArm.rotation.z = Math.PI / 4 - 0.3;
+        rightArm.rotation.z = -Math.PI / 4 + 0.3;
+
         // Check if landed
         if (character.position.y <= groundLevel) {
             character.position.y = groundLevel;
             isJumping = false;
             verticalVelocity = 0;
+            // Reset to default pose
+            leftLeg.rotation.x = 0;
+            rightLeg.rotation.x = 0;
+            leftArm.rotation.z = Math.PI / 4;
+            rightArm.rotation.z = -Math.PI / 4;
         }
     }
 
     // Reset animations when not moving
-    if (!keys['ArrowLeft'] && !keys['ArrowRight'] && !keys['ArrowUp'] && !keys['ArrowDown']) {
+    if (!keys['ArrowLeft'] && !keys['ArrowRight'] && !keys['ArrowUp'] && !keys['ArrowDown'] && !isJumping) {
         leftLeg.rotation.x = 0;
         rightLeg.rotation.x = 0;
         leftArm.rotation.z = Math.PI / 4;
         rightArm.rotation.z = -Math.PI / 4;
+        leftHand.rotation.z = 0;
+        rightHand.rotation.z = 0;
+        leftFoot.rotation.x = 0;
+        rightFoot.rotation.x = 0;
     }
 
     // Update chunks based on character position
