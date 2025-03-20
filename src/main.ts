@@ -554,7 +554,7 @@ function activateSuperhumanMode() {
     superhumanTimer = 10;
     timerPanel.style.display = 'block';
     
-    // Make character glow
+    // Make character glow and bigger
     const glowMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x00ff00,
         roughness: 0.5,
@@ -569,8 +569,16 @@ function activateSuperhumanMode() {
         }
     });
 
+    // Double character size
+    character.scale.set(2, 2, 2);
+
     // Double movement speed
     moveSpeed *= 2;
+
+    // Make creatures flee
+    foreignCreatures.forEach(creature => {
+        creature.setFleeing(true);
+    });
 }
 
 // Function to deactivate superhuman mode
@@ -578,7 +586,7 @@ function deactivateSuperhumanMode() {
     isSuperhuman = false;
     timerPanel.style.display = 'none';
     
-    // Reset character appearance
+    // Reset character appearance and size
     const normalMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x00ff00,
         roughness: 0.5,
@@ -591,8 +599,16 @@ function deactivateSuperhumanMode() {
         }
     });
 
+    // Reset character size
+    character.scale.set(1, 1, 1);
+
     // Reset movement speed
     moveSpeed /= 2;
+
+    // Make creatures chase again
+    foreignCreatures.forEach(creature => {
+        creature.setFleeing(false);
+    });
 }
 
 // Update animation loop
@@ -724,7 +740,20 @@ const animate = (): void => {
 
         // Update foreign creatures
         foreignCreatures.forEach((creature, index) => {
-            creature.update(character.position);
+            if (isSuperhuman) {
+                creature.update(character.position);
+                
+                // Remove creatures that are far enough away
+                const distanceToPlayer = creature.getMesh().position.distanceTo(character.position);
+                if (distanceToPlayer > 30) {
+                    scene.remove(creature.getMesh());
+                    foreignCreatures.splice(index, 1);
+                    score += 50; // Give points for making creatures flee
+                    scorePanel.innerHTML = `Score: ${score}`;
+                }
+            } else {
+                creature.update(character.position);
+            }
             
             // Check for collision
             if (creature.checkCollision(character.position)) {

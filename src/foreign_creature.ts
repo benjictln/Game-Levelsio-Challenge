@@ -2,14 +2,16 @@ import * as THREE from "three";
 
 export class ForeignCreature {
     private mesh: THREE.Group;
-    private speed: number;
+    public speed: number;
+    private isFleeing: boolean = false;
 
-    constructor(x: number, z: number, speed: number = 0.02) {
-        this.speed = speed;
-        this.mesh = this.createMesh(x, z);
+    constructor(x: number, z: number) {
+        this.mesh = this.createMesh();
+        this.speed = 0.05;
+        this.mesh.position.set(x, 0, z);
     }
 
-    private createMesh(x: number, z: number): THREE.Group {
+    private createMesh(): THREE.Group {
         const creature = new THREE.Group();
         
         // Body
@@ -91,7 +93,6 @@ export class ForeignCreature {
         backRightLeg.receiveShadow = true;
         creature.add(backRightLeg);
 
-        creature.position.set(x, 0, z);
         return creature;
     }
 
@@ -104,20 +105,30 @@ export class ForeignCreature {
     }
 
     public update(targetPosition: THREE.Vector3): void {
-        // Calculate direction to target
         const direction = new THREE.Vector3();
-        direction.subVectors(targetPosition, this.mesh.position).normalize();
         
-        // Move towards target
-        this.mesh.position.x += direction.x * this.speed;
-        this.mesh.position.z += direction.z * this.speed;
-        
-        // Make creature face the target
-        this.mesh.lookAt(targetPosition);
+        if (this.isFleeing) {
+            // Run away from target
+            direction.subVectors(this.mesh.position, targetPosition).normalize();
+            this.mesh.position.x += direction.x * (this.speed * 2);
+            this.mesh.position.z += direction.z * (this.speed * 2);
+        } else {
+            // Move towards target
+            direction.subVectors(targetPosition, this.mesh.position).normalize();
+            this.mesh.position.x += direction.x * this.speed;
+            this.mesh.position.z += direction.z * this.speed;
+        }
+
+        // Make the creature face the direction it's moving
+        this.mesh.lookAt(this.isFleeing ? this.mesh.position.clone().add(direction) : targetPosition);
     }
 
     public checkCollision(targetPosition: THREE.Vector3): boolean {
         const distance = this.mesh.position.distanceTo(targetPosition);
         return distance < 1; // Collision radius
+    }
+
+    public setFleeing(fleeing: boolean): void {
+        this.isFleeing = fleeing;
     }
 } 
