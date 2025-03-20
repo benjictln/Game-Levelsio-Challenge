@@ -64,7 +64,9 @@ window.addEventListener("resize", () => {
 // Terrain settings
 const CHUNK_SIZE = 50;
 const CHUNK_RADIUS = 2; // Number of chunks to load in each direction
+const CREATURES_PER_CHUNK = 3; // Number of creatures per chunk
 const chunks: Map<string, THREE.Group> = new Map();
+const foreignCreatures: ForeignCreature[] = [];
 
 // Create a chunk of terrain
 function createChunk(chunkX: number, chunkZ: number): THREE.Group {
@@ -244,7 +246,7 @@ function getChunkCoords(x: number, z: number): [number, number] {
     ];
 }
 
-// Function to update visible chunks
+// Function to update visible chunks and creatures
 function updateChunks(characterX: number, characterZ: number) {
     const [currentChunkX, currentChunkZ] = getChunkCoords(characterX, characterZ);
     
@@ -266,6 +268,15 @@ function updateChunks(characterX: number, characterZ: number) {
                 const chunk = createChunk(x, z);
                 chunks.set(key, chunk);
                 scene.add(chunk);
+
+                // Add creatures to this chunk
+                for (let i = 0; i < CREATURES_PER_CHUNK; i++) {
+                    const creatureX = x * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
+                    const creatureZ = z * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
+                    const creature = new ForeignCreature(creatureX, creatureZ);
+                    scene.add(creature.getMesh());
+                    foreignCreatures.push(creature);
+                }
             }
         }
     }
@@ -464,19 +475,6 @@ updateChunks(0, 0);
 
 // Game state
 let isGameOver = false;
-
-// Create initial foreign creatures
-const foreignCreatures: ForeignCreature[] = [];
-const numCreatures = 5;
-
-// Spawn creatures at random positions
-for (let i = 0; i < numCreatures; i++) {
-    const x = (Math.random() - 0.5) * 50;
-    const z = (Math.random() - 0.5) * 50;
-    const creature = new ForeignCreature(x, z);
-    scene.add(creature.getMesh());
-    foreignCreatures.push(creature);
-}
 
 // Game Over UI
 const gameOverPanel = document.createElement('div');
