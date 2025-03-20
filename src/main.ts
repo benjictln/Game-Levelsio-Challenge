@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { AudioManager } from "./audio";
 import { ForeignCreature } from "./foreign_creature";
-import { BaguetteAndWine } from "./baguette";
+import { BaguetteAndWine } from "./powerups/BaguetteAndWine";
 
 // Setup Scene
 const scene: THREE.Scene = new THREE.Scene();
