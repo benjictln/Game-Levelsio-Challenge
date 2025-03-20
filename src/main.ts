@@ -5,6 +5,25 @@ import { AudioManager } from "./audio";
 const scene: THREE.Scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB); // Sky blue background
 
+// Create UI Panel
+const controlsPanel = document.createElement('div');
+controlsPanel.style.position = 'fixed';
+controlsPanel.style.top = '20px';
+controlsPanel.style.left = '20px';
+controlsPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+controlsPanel.style.padding = '15px';
+controlsPanel.style.borderRadius = '10px';
+controlsPanel.style.color = 'white';
+controlsPanel.style.fontFamily = 'Arial, sans-serif';
+controlsPanel.style.fontSize = '16px';
+controlsPanel.style.lineHeight = '1.5';
+controlsPanel.style.zIndex = '1000';
+controlsPanel.innerHTML = `
+    Space: jump<br>
+    M: mute / unmute sound
+`;
+document.body.appendChild(controlsPanel);
+
 // Initialize Audio Manager
 const audioManager = new AudioManager();
 
