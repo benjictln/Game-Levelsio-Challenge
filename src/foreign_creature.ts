@@ -2,13 +2,15 @@ import * as THREE from "three";
 
 export class ForeignCreature {
     private mesh: THREE.Group;
-    public speed: number;
+    private speed: number = 0.05;
     private isFleeing: boolean = false;
+    private currentVelocity: THREE.Vector3;
+    private fleeDistance: number = 15; // Distance at which creatures start fleeing
 
     constructor(x: number, z: number) {
         this.mesh = this.createMesh();
-        this.speed = 0.05;
         this.mesh.position.set(x, 0, z);
+        this.currentVelocity = new THREE.Vector3(0, 0, 0);
     }
 
     private createMesh(): THREE.Group {
@@ -105,30 +107,48 @@ export class ForeignCreature {
     }
 
     public update(targetPosition: THREE.Vector3): void {
+        const distanceToTarget = this.mesh.position.distanceTo(targetPosition);
         const direction = new THREE.Vector3();
         
         if (this.isFleeing) {
-            // Run away from target
+            // Move away from player
             direction.subVectors(this.mesh.position, targetPosition).normalize();
-            this.mesh.position.x += direction.x * (this.speed * 2);
-            this.mesh.position.z += direction.z * (this.speed * 2);
+            const fleeSpeed = this.speed * 1.5; // Slightly faster when fleeing
+            
+            // Smooth movement
+            this.currentVelocity.lerp(direction.multiplyScalar(fleeSpeed), 0.1);
         } else {
-            // Move towards target
+            // Move towards player
             direction.subVectors(targetPosition, this.mesh.position).normalize();
-            this.mesh.position.x += direction.x * this.speed;
-            this.mesh.position.z += direction.z * this.speed;
+            this.currentVelocity.lerp(direction.multiplyScalar(this.speed), 0.1);
         }
 
-        // Make the creature face the direction it's moving
-        this.mesh.lookAt(this.isFleeing ? this.mesh.position.clone().add(direction) : targetPosition);
+        // Apply movement
+        this.mesh.position.add(this.currentVelocity);
+
+        // Smooth rotation to face movement direction
+        if (this.currentVelocity.lengthSq() > 0.0001) {
+            const targetRotation = Math.atan2(this.currentVelocity.x, this.currentVelocity.z);
+            const currentRotation = this.mesh.rotation.y;
+            let rotationDiff = targetRotation - currentRotation;
+            
+            // Ensure we rotate the shortest way
+            while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
+            while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
+            
+            this.mesh.rotation.y += rotationDiff * 0.1;
+        }
     }
 
     public checkCollision(targetPosition: THREE.Vector3): boolean {
         const distance = this.mesh.position.distanceTo(targetPosition);
-        return distance < 1; // Collision radius
+        return distance < 1;
     }
 
     public setFleeing(fleeing: boolean): void {
-        this.isFleeing = fleeing;
+        if (this.isFleeing !== fleeing) {
+            this.isFleeing = fleeing;
+            this.currentVelocity.set(0, 0, 0); // Reset velocity on state change
+        }
     }
 } 

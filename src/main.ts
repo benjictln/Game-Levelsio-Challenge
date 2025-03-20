@@ -739,36 +739,37 @@ const animate = (): void => {
         camera.lookAt(character.position);
 
         // Update foreign creatures
+        const creaturesToRemove: number[] = [];
         foreignCreatures.forEach((creature, index) => {
-            if (isSuperhuman) {
-                creature.update(character.position);
-                
-                // Remove creatures that are far enough away
-                const distanceToPlayer = creature.getMesh().position.distanceTo(character.position);
-                if (distanceToPlayer > 30) {
-                    scene.remove(creature.getMesh());
-                    foreignCreatures.splice(index, 1);
-                    score += 50; // Give points for making creatures flee
-                    scorePanel.innerHTML = `Score: ${score}`;
-                }
-            } else {
-                creature.update(character.position);
-            }
+            creature.update(character.position);
             
             // Check for collision
             if (creature.checkCollision(character.position)) {
                 if (isSuperhuman) {
-                    // Kill the creature
-                    scene.remove(creature.getMesh());
-                    foreignCreatures.splice(index, 1);
+                    creaturesToRemove.push(index);
                     score += 100;
                     scorePanel.innerHTML = `Score: ${score}`;
                 } else {
                     isGameOver = true;
                     gameOverPanel.style.display = 'block';
                 }
+            } else if (isSuperhuman) {
+                // Check if creature has fled far enough
+                const distanceToPlayer = creature.getMesh().position.distanceTo(character.position);
+                if (distanceToPlayer > 30) {
+                    creaturesToRemove.push(index);
+                    score += 50; // Points for making creature flee
+                    scorePanel.innerHTML = `Score: ${score}`;
+                }
             }
         });
+
+        // Remove creatures in reverse order to maintain correct indices
+        for (let i = creaturesToRemove.length - 1; i >= 0; i--) {
+            const index = creaturesToRemove[i];
+            scene.remove(foreignCreatures[index].getMesh());
+            foreignCreatures.splice(index, 1);
+        }
     }
 
     renderer.render(scene, camera);
