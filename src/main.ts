@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { AudioManager } from "./audio";
 import { ForeignCreature } from "./foreign_creature";
+import { Baguette } from "./baguette";
 
 // Setup Scene
 const scene: THREE.Scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87CEEB); // Sky blue background
 
-// Create UI Panel
+// Create UI elements
 const controlsPanel = document.createElement('div');
 controlsPanel.style.position = 'fixed';
 controlsPanel.style.top = '20px';
@@ -24,6 +25,71 @@ controlsPanel.innerHTML = `
     M: mute / unmute sound
 `;
 document.body.appendChild(controlsPanel);
+
+const scorePanel = document.createElement('div');
+scorePanel.style.position = 'fixed';
+scorePanel.style.top = '20px';
+scorePanel.style.right = '20px';
+scorePanel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+scorePanel.style.padding = '15px';
+scorePanel.style.borderRadius = '10px';
+scorePanel.style.color = 'white';
+scorePanel.style.fontFamily = 'Arial, sans-serif';
+scorePanel.style.fontSize = '16px';
+scorePanel.style.lineHeight = '1.5';
+scorePanel.style.zIndex = '1000';
+scorePanel.innerHTML = `Score: 0`;
+document.body.appendChild(scorePanel);
+
+const timerPanel = document.createElement('div');
+timerPanel.style.position = 'fixed';
+timerPanel.style.top = '20px';
+timerPanel.style.left = '50%';
+timerPanel.style.transform = 'translateX(-50%)';
+timerPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+timerPanel.style.padding = '15px';
+timerPanel.style.borderRadius = '10px';
+timerPanel.style.color = 'white';
+timerPanel.style.fontFamily = 'Arial, sans-serif';
+timerPanel.style.fontSize = '16px';
+timerPanel.style.lineHeight = '1.5';
+timerPanel.style.zIndex = '1000';
+timerPanel.style.display = 'none';
+timerPanel.innerHTML = `Superhuman Mode: 10s`;
+document.body.appendChild(timerPanel);
+
+const gameOverPanel = document.createElement('div');
+gameOverPanel.style.position = 'fixed';
+gameOverPanel.style.top = '50%';
+gameOverPanel.style.left = '50%';
+gameOverPanel.style.transform = 'translate(-50%, -50%)';
+gameOverPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+gameOverPanel.style.padding = '30px';
+gameOverPanel.style.borderRadius = '15px';
+gameOverPanel.style.color = 'white';
+gameOverPanel.style.fontFamily = 'Arial, sans-serif';
+gameOverPanel.style.fontSize = '24px';
+gameOverPanel.style.textAlign = 'center';
+gameOverPanel.style.display = 'none';
+gameOverPanel.style.zIndex = '1000';
+gameOverPanel.innerHTML = `
+    <h2 style="margin: 0 0 20px 0;">Game Over!</h2>
+    <p style="margin: 0;">You were caught by a foreign creature!</p>
+    <button style="margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer;">Restart Game</button>
+`;
+document.body.appendChild(gameOverPanel);
+
+// Add click handler for restart button
+gameOverPanel.querySelector('button')?.addEventListener('click', () => {
+    location.reload();
+});
+
+// Initialize game state
+let isGameOver = false;
+let isSuperhuman = false;
+let superhumanTimer = 0;
+let score = 0;
+const baguettes: Baguette[] = [];
 
 // Initialize Audio Manager
 const audioManager = new AudioManager();
@@ -246,7 +312,7 @@ function getChunkCoords(x: number, z: number): [number, number] {
     ];
 }
 
-// Function to update visible chunks and creatures
+// Function to update visible chunks and items
 function updateChunks(characterX: number, characterZ: number) {
     const [currentChunkX, currentChunkZ] = getChunkCoords(characterX, characterZ);
     
@@ -276,6 +342,15 @@ function updateChunks(characterX: number, characterZ: number) {
                     const creature = new ForeignCreature(creatureX, creatureZ);
                     scene.add(creature.getMesh());
                     foreignCreatures.push(creature);
+                }
+
+                // Add baguette to this chunk (20% chance)
+                if (Math.random() < 0.2) {
+                    const baguetteX = x * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
+                    const baguetteZ = z * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
+                    const baguette = new Baguette(baguetteX, baguetteZ);
+                    scene.add(baguette.getMesh());
+                    baguettes.push(baguette);
                 }
             }
         }
@@ -447,7 +522,7 @@ const cameraOffset = new THREE.Vector3(0, 5, 10);
 const cameraLerpFactor = 0.1; // Smoothing factor for camera movement
 
 // Movement variables
-const moveSpeed = 0.1;
+let moveSpeed = 0.1;
 const keys: { [key: string]: boolean } = {};
 
 // Jump variables
@@ -473,41 +548,68 @@ window.addEventListener('keyup', (event) => {
 // Initial chunk generation
 updateChunks(0, 0);
 
-// Game state
-let isGameOver = false;
+// Function to activate superhuman mode
+function activateSuperhumanMode() {
+    isSuperhuman = true;
+    superhumanTimer = 10;
+    timerPanel.style.display = 'block';
+    
+    // Make character glow
+    const glowMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x00ff00,
+        roughness: 0.5,
+        metalness: 0.1,
+        emissive: 0x00ff00,
+        emissiveIntensity: 0.5
+    });
+    
+    character.children.forEach(child => {
+        if (child instanceof THREE.Mesh) {
+            child.material = glowMaterial;
+        }
+    });
 
-// Game Over UI
-const gameOverPanel = document.createElement('div');
-gameOverPanel.style.position = 'fixed';
-gameOverPanel.style.top = '50%';
-gameOverPanel.style.left = '50%';
-gameOverPanel.style.transform = 'translate(-50%, -50%)';
-gameOverPanel.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-gameOverPanel.style.padding = '30px';
-gameOverPanel.style.borderRadius = '15px';
-gameOverPanel.style.color = 'white';
-gameOverPanel.style.fontFamily = 'Arial, sans-serif';
-gameOverPanel.style.fontSize = '24px';
-gameOverPanel.style.textAlign = 'center';
-gameOverPanel.style.display = 'none';
-gameOverPanel.style.zIndex = '1000';
-gameOverPanel.innerHTML = `
-    <h2 style="margin: 0 0 20px 0;">Game Over!</h2>
-    <p style="margin: 0;">You were caught by a foreign creature!</p>
-    <button style="margin-top: 20px; padding: 10px 20px; font-size: 18px; cursor: pointer;">Restart Game</button>
-`;
-document.body.appendChild(gameOverPanel);
+    // Double movement speed
+    moveSpeed *= 2;
+}
 
-// Add click handler for restart button
-gameOverPanel.querySelector('button')?.addEventListener('click', () => {
-    location.reload();
-});
+// Function to deactivate superhuman mode
+function deactivateSuperhumanMode() {
+    isSuperhuman = false;
+    timerPanel.style.display = 'none';
+    
+    // Reset character appearance
+    const normalMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x00ff00,
+        roughness: 0.5,
+        metalness: 0.1
+    });
+    
+    character.children.forEach(child => {
+        if (child instanceof THREE.Mesh) {
+            child.material = normalMaterial;
+        }
+    });
+
+    // Reset movement speed
+    moveSpeed /= 2;
+}
 
 // Update animation loop
 const animate = (): void => {
     requestAnimationFrame(animate);
 
     if (!isGameOver) {
+        // Update superhuman timer
+        if (isSuperhuman) {
+            superhumanTimer -= 1/60; // Assuming 60 FPS
+            timerPanel.innerHTML = `Superhuman Mode: ${Math.ceil(superhumanTimer)}s`;
+            
+            if (superhumanTimer <= 0) {
+                deactivateSuperhumanMode();
+            }
+        }
+
         // Handle movement
         if (keys['ArrowLeft']) {
             character.position.x -= moveSpeed;
@@ -594,6 +696,16 @@ const animate = (): void => {
             rightFoot.rotation.x = 0;
         }
 
+        // Check for baguette collection
+        baguettes.forEach((baguette, index) => {
+            if (!baguette.isCollectedStatus() && baguette.checkCollision(character.position)) {
+                baguette.collect();
+                scene.remove(baguette.getMesh());
+                baguettes.splice(index, 1);
+                activateSuperhumanMode();
+            }
+        });
+
         // Update chunks based on character position
         updateChunks(character.position.x, character.position.z);
 
@@ -611,13 +723,21 @@ const animate = (): void => {
         camera.lookAt(character.position);
 
         // Update foreign creatures
-        foreignCreatures.forEach(creature => {
+        foreignCreatures.forEach((creature, index) => {
             creature.update(character.position);
             
             // Check for collision
             if (creature.checkCollision(character.position)) {
-                isGameOver = true;
-                gameOverPanel.style.display = 'block';
+                if (isSuperhuman) {
+                    // Kill the creature
+                    scene.remove(creature.getMesh());
+                    foreignCreatures.splice(index, 1);
+                    score += 100;
+                    scorePanel.innerHTML = `Score: ${score}`;
+                } else {
+                    isGameOver = true;
+                    gameOverPanel.style.display = 'block';
+                }
             }
         });
     }
