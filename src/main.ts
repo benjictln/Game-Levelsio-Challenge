@@ -504,6 +504,19 @@ rightFoot.castShadow = true;
 rightFoot.receiveShadow = true;
 character.add(rightFoot);
 
+// Create kill zone indicator
+const killZoneGeometry = new THREE.RingGeometry(0, 5, 32);
+const killZoneMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0xff0000,
+    transparent: true,
+    opacity: 0.2,
+    side: THREE.DoubleSide
+});
+const killZone = new THREE.Mesh(killZoneGeometry, killZoneMaterial);
+killZone.rotation.x = -Math.PI / 2;
+killZone.visible = false;
+scene.add(killZone);
+
 scene.add(character);
 
 // Add Lighting
@@ -572,6 +585,15 @@ function activateSuperhumanMode() {
     // Double character size
     character.scale.set(2, 2, 2);
 
+    // Show and animate kill zone
+    killZone.visible = true;
+    const pulseKillZone = () => {
+        if (!isSuperhuman) return;
+        killZone.material.opacity = 0.2 + Math.sin(Date.now() * 0.003) * 0.1;
+        requestAnimationFrame(pulseKillZone);
+    };
+    pulseKillZone();
+
     // Double movement speed
     moveSpeed *= 2;
 
@@ -599,6 +621,9 @@ function deactivateSuperhumanMode() {
         }
     });
 
+    // Hide kill zone
+    killZone.visible = false;
+
     // Reset character size
     character.scale.set(1, 1, 1);
 
@@ -625,6 +650,9 @@ const animate = (): void => {
                 deactivateSuperhumanMode();
             }
         }
+
+        // Update kill zone position to follow character
+        killZone.position.copy(character.position);
 
         // Handle movement
         if (keys['ArrowLeft']) {
@@ -743,24 +771,32 @@ const animate = (): void => {
         foreignCreatures.forEach((creature, index) => {
             creature.update(character.position);
             
-            // Check for collision
-            if (creature.checkCollision(character.position)) {
-                if (isSuperhuman) {
+            // Calculate bubble radius based on character size
+            const characterRadius = 0.5; // Base character radius
+            const bubbleRadius = characterRadius * (isSuperhuman ? 4 : 2); // 2x in normal mode, 4x in superhuman mode
+            const maxCheckDistance = 5; // Maximum distance to check for collisions
+            
+            // Check for collision with bubble
+            const distanceToPlayer = creature.getMesh().position.distanceTo(character.position);
+            
+            // Only process creatures within maxCheckDistance
+            if (distanceToPlayer > maxCheckDistance) {
+                return;
+            }
+            
+            if (isSuperhuman) {
+                if (distanceToPlayer < bubbleRadius) {
                     creaturesToRemove.push(index);
                     score += 100;
                     scorePanel.innerHTML = `Score: ${score}`;
-                } else {
-                    isGameOver = true;
-                    gameOverPanel.style.display = 'block';
-                }
-            } else if (isSuperhuman) {
-                // Check if creature has fled far enough
-                const distanceToPlayer = creature.getMesh().position.distanceTo(character.position);
-                if (distanceToPlayer > 30) {
+                } else if (distanceToPlayer > bubbleRadius * 2) {
                     creaturesToRemove.push(index);
-                    score += 50; // Points for making creature flee
+                    score += 50;
                     scorePanel.innerHTML = `Score: ${score}`;
                 }
+            } else if (distanceToPlayer < bubbleRadius) {
+                isGameOver = true;
+                gameOverPanel.style.display = 'block';
             }
         });
 
