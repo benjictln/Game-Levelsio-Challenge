@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { AudioManager } from "./audio";
 import { ForeignCreature } from "./foreign_creature";
-import { Baguette } from "./baguette";
+import { BaguetteAndWine } from "./baguette";
 
 // Setup Scene
 const scene: THREE.Scene = new THREE.Scene();
@@ -89,7 +89,7 @@ let isGameOver = false;
 let isSuperhuman = false;
 let superhumanTimer = 0;
 let score = 0;
-const baguettes: Baguette[] = [];
+const baguettes: BaguetteAndWine[] = [];
 
 // Initialize Audio Manager
 const audioManager = new AudioManager();
@@ -344,13 +344,13 @@ function updateChunks(characterX: number, characterZ: number) {
                     foreignCreatures.push(creature);
                 }
 
-                // Add baguette to this chunk (20% chance)
+                // Add baguette and wine to this chunk (20% chance)
                 if (Math.random() < 0.2) {
-                    const baguetteX = x * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
-                    const baguetteZ = z * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
-                    const baguette = new Baguette(baguetteX, baguetteZ);
-                    scene.add(baguette.getMesh());
-                    baguettes.push(baguette);
+                    const powerupX = x * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
+                    const powerupZ = z * CHUNK_SIZE + (Math.random() - 0.5) * CHUNK_SIZE;
+                    const powerup = new BaguetteAndWine(powerupX, powerupZ);
+                    scene.add(powerup.getMesh());
+                    baguettes.push(powerup);
                 }
             }
         }

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export class Baguette {
+export class BaguetteAndWine {
     private mesh: THREE.Group;
     private isCollected: boolean = false;
 
@@ -9,6 +9,33 @@ export class Baguette {
     }
 
     private createMesh(x: number, z: number): THREE.Group {
+        const group = new THREE.Group();
+        
+        // Create baguette
+        const baguette = this.createBaguette();
+        baguette.position.x += 0.4; // Offset to make room for wine bottle
+        group.add(baguette);
+
+        // Create wine bottle
+        const bottle = this.createWineBottle();
+        bottle.position.x -= 0.4; // Offset to the other side
+        group.add(bottle);
+
+        // Position the entire group
+        group.position.set(x, 1, z);
+        group.rotation.y = Math.random() * Math.PI * 2; // Random rotation
+        
+        // Add floating animation
+        const animate = () => {
+            group.position.y = 1 + Math.sin(Date.now() * 0.002) * 0.1;
+            requestAnimationFrame(animate);
+        };
+        animate();
+
+        return group;
+    }
+
+    private createBaguette(): THREE.Group {
         const baguette = new THREE.Group();
         
         // Create a curved path for the baguette
@@ -44,12 +71,11 @@ export class Baguette {
             });
             const slash = new THREE.Mesh(slashGeometry, slashMaterial);
             
-            // Position slashes diagonally along the baguette
             const t = (i + 1) / (slashCount + 1);
             const point = curve.getPoint(t);
             slash.position.set(point.x * 2, point.y + 0.15, 0);
-            slash.rotation.z = Math.PI / 4; // 45-degree angle
-            slash.rotation.y = Math.PI / 6; // Slight tilt
+            slash.rotation.z = Math.PI / 4;
+            slash.rotation.y = Math.PI / 6;
             baguette.add(slash);
         }
 
@@ -58,13 +84,12 @@ export class Baguette {
         for (let i = 0; i < bumpCount; i++) {
             const bumpGeometry = new THREE.SphereGeometry(0.03, 4, 4);
             const bumpMaterial = new THREE.MeshStandardMaterial({ 
-                color: i % 2 === 0 ? 0xffffff : 0xd4a056, // Alternate between white (flour) and darker brown
+                color: i % 2 === 0 ? 0xffffff : 0xd4a056,
                 roughness: 0.9,
                 metalness: 0.1
             });
             const bump = new THREE.Mesh(bumpGeometry, bumpMaterial);
             
-            // Random position along the baguette
             const t = Math.random();
             const point = curve.getPoint(t);
             bump.position.set(
@@ -78,7 +103,7 @@ export class Baguette {
         // Add ends of the baguette
         const endGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 8);
         const endMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xd4a056, // Slightly darker for the ends
+            color: 0xd4a056,
             roughness: 0.9,
             metalness: 0.1
         });
@@ -93,18 +118,76 @@ export class Baguette {
         end2.position.set(1.6, 0, 0);
         baguette.add(end2);
 
-        // Position the entire baguette
-        baguette.position.set(x, 1, z);
-        baguette.rotation.y = Math.random() * Math.PI * 2; // Random rotation
-        
-        // Add floating animation
-        const animate = () => {
-            baguette.position.y = 1 + Math.sin(Date.now() * 0.002) * 0.1;
-            requestAnimationFrame(animate);
-        };
-        animate();
-
         return baguette;
+    }
+
+    private createWineBottle(): THREE.Group {
+        const bottle = new THREE.Group();
+
+        // Bottle body
+        const bodyGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1.2, 16);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            color: 0x4a0404, // Deep red wine color
+            roughness: 0.2,
+            metalness: 0.8,
+            transparent: true,
+            opacity: 0.9
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 0.6;
+        body.castShadow = true;
+        body.receiveShadow = true;
+        bottle.add(body);
+
+        // Bottle neck
+        const neckGeometry = new THREE.CylinderGeometry(0.05, 0.08, 0.4, 16);
+        const neck = new THREE.Mesh(neckGeometry, bodyMaterial);
+        neck.position.y = 1.4;
+        neck.castShadow = true;
+        neck.receiveShadow = true;
+        bottle.add(neck);
+
+        // Cork
+        const corkGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.1, 16);
+        const corkMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8B4513, // Brown cork color
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        const cork = new THREE.Mesh(corkGeometry, corkMaterial);
+        cork.position.y = 1.65;
+        cork.castShadow = true;
+        cork.receiveShadow = true;
+        bottle.add(cork);
+
+        // Wine label
+        const labelGeometry = new THREE.PlaneGeometry(0.4, 0.5);
+        const labelMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf5f5dc, // Beige color
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        const label = new THREE.Mesh(labelGeometry, labelMaterial);
+        label.position.set(0, 0.6, 0.16);
+        label.rotation.x = 0;
+        bottle.add(label);
+
+        // Add some decorative text-like details to the label
+        const detailGeometry = new THREE.PlaneGeometry(0.3, 0.05);
+        const detailMaterial = new THREE.MeshStandardMaterial({
+            color: 0x800000, // Dark red color
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        
+        // Add three lines of "text"
+        for (let i = 0; i < 3; i++) {
+            const detail = new THREE.Mesh(detailGeometry, detailMaterial);
+            detail.position.set(0, 0.7 - (i * 0.15), 0.17);
+            bottle.add(detail);
+        }
+
+        return bottle;
     }
 
     public getMesh(): THREE.Group {
