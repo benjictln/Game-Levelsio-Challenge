@@ -5,8 +5,8 @@ export class ForeignCreature {
     private speed: number = 0.05;
     private isFleeing: boolean = false;
     private currentVelocity: THREE.Vector3;
-    private fleeDistance: number = 15; // Distance at which creatures start fleeing
 
+    
     constructor(x: number, z: number) {
         this.mesh = this.createMesh();
         this.mesh.position.set(x, 0, z);
@@ -107,7 +107,6 @@ export class ForeignCreature {
     }
 
     public update(targetPosition: THREE.Vector3): void {
-        const distanceToTarget = this.mesh.position.distanceTo(targetPosition);
         const direction = new THREE.Vector3();
         
         if (this.isFleeing) {
